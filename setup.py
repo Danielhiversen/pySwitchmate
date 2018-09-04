@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name = 'PySeitchmate',
     packages = ['switchmate'],
-    install_requires=['cbluepy'],
+    install_requires=['bluepy'],
     version = '0.1',
     description = 'A library to communicate with Switchmate',
     author='Daniel Hoyer Iversen',
