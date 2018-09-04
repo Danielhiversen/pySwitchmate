@@ -10,6 +10,7 @@ OFF_KEY = b'\x01'
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class Switchmate:
     """Representation of a Switchmate."""
 
