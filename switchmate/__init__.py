@@ -1,17 +1,19 @@
 """Library to handle connection with Switchmate"""
 
 import bluepy
+import logging
 
 HANDLE = 0x2e
 ON_KEY = b'\x00'
 OFF_KEY = b'\x01'
 
+_LOGGER = logging.getLogger(__name__)
 
 class Switchmate:
     """Representation of a Switchmate."""
 
     def __init__(self, mac) -> None:
-        sel.mac = mac
+        self._mac = mac
         self._device = None
         self._connect()
 
@@ -40,12 +42,12 @@ class Switchmate:
                 return False
             self._sendpacket(key, retry-1)
         return True
-      
+
     def update(self) -> None:
         """Synchronize state with switch."""
         import bluepy
         try:
-           return self._device.readCharacteristic(HANDLE) == ON_KEY
+            return self._device.readCharacteristic(HANDLE) == ON_KEY
         except bluepy.btle.BTLEException:
             self._connect()
 
