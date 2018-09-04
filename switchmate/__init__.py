@@ -1,7 +1,8 @@
 """Library to handle connection with Switchmate"""
 
-import bluepy
 import logging
+
+import bluepy
 
 HANDLE = 0x2e
 ON_KEY = b'\x00'
@@ -45,7 +46,6 @@ class Switchmate:
 
     def update(self) -> None:
         """Synchronize state with switch."""
-        import bluepy
         try:
             return self._device.readCharacteristic(HANDLE) == ON_KEY
         except bluepy.btle.BTLEException:
