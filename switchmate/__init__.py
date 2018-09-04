@@ -2,6 +2,11 @@
 
 import bluepy
 
+HANDLE = 0x2e
+ON_KEY = b'\x00'
+OFF_KEY = b'\x01'
+
+
 class Switchmate:
     """Representation of a Switchmate."""
 
