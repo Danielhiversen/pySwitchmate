@@ -14,5 +14,11 @@ script:
 - flake8 switchmate --max-line-length=120
 - pylint switchmate --max-line-length=120
 deploy:
+  provider: pypi
+  user: dahoiv
   password:
     secure: U48q+ax6WAbLk3xTI8kxtcjf3TrgT/Vgun/8jDUOI/forYgqV/C0HuuA+q7+MwvuNfReOw0vFkr2t+Bu+7qOAbbin0/2FBEIAXoCkymA9bcSQGqFAxveF+kvkUaWi/7JwTpCO2tvOUMtkXYmDd5IJg1iQ4/TsAUDbPZFgi0SK06tJGgbqsi+tySZVtMc/k8BE7ijDttD4J/XrJAUta7PH1SFVICN5n9iAvWIyb9de908Tyfpip5IIUMvhNQxrYwLiwYBzNbcOj4tnEut6xtilx6S8gky7RXoBeRr0m0RmCKaYqhpNzf9N9zXFOWRyJXUyYVLJELbBEd1OFq2b2xAFEaj3MSpkl+ouofI071Tvtsur176QMwL2Ge4XS/jeUeyP2tdeHtR553s50DVrXODKPtzGykgoStzkjxqO0XMdSFUyaKchJ8zz60vimcgzvYMDdwn/NKF/t26RUGFTaA1PXPHRKNe6c56gFMz9Buo7zdNDJHUOxpaI2CgR2HfMKCtaqtw6YecRu6Z1cjAVHmqrrJ4H9YYwFwkBFmv07qG2MSuzqG/eXfbxtVPaytAgditgbGgfDtX0aGvAYEnFnBb0MOddNbLi/rANRN1THmlLN4tidiaU8aOQmfSp+n2ANTnH9z5WzcSFIKrnjSs2+PGxyempEwkQVo+IiwBquyWA2s=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: Danielhiversen/pySwitchmate
