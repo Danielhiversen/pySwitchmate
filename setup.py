@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name = 'PySeitchmate',
+    name = 'PySwitchmate',
     packages = ['switchmate'],
     install_requires=['bluepy'],
     version = '0.2',
