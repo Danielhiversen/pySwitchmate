@@ -52,10 +52,10 @@ class Switchmate:
         except bluepy.btle.BTLEException:
             self._connect()
 
-    def turn_on(self) -> None:
+    def turn_on(self) -> bool:
         """Turn the switch on."""
-        self._sendpacket(ON_KEY)
+        return self._sendpacket(ON_KEY)
 
-    def turn_off(self) -> None:
+    def turn_off(self) -> bool:
         """Turn the switch off."""
-        self._sendpacket(OFF_KEY)
+        return self._sendpacket(OFF_KEY)
