@@ -16,6 +16,7 @@ class Switchmate:
 
     def __init__(self, mac) -> None:
         self._mac = mac
+        self.state = False
         self._device = None
         self._connect()
 
@@ -48,7 +49,7 @@ class Switchmate:
     def update(self) -> None:
         """Synchronize state with switch."""
         try:
-            return self._device.readCharacteristic(HANDLE) == ON_KEY
+            self.state = self._device.readCharacteristic(HANDLE) == ON_KEY
         except bluepy.btle.BTLEException:
             self._connect()
 
