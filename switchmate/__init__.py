@@ -30,7 +30,7 @@ class Switchmate:
             self._device = bluepy.btle.Peripheral(self._mac,
                                                   bluepy.btle.ADDR_TYPE_RANDOM)
         except bluepy.btle.BTLEException:
-            _LOGGER.error("Failed to connect to switchmate")
+            _LOGGER.error("Failed to connect to switchmate", exc_info=True)
             return False
         return True
 
