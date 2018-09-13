@@ -22,11 +22,13 @@ class Switchmate:
 
     def _connect(self) -> bool:
         if self._device:
+            _LOGGER.debug("Disconnecting")
             try:
                 self._device.disconnect()
             except bluepy.btle.BTLEException:
                 pass
         try:
+            _LOGGER.debug("Connecting")
             self._device = bluepy.btle.Peripheral(self._mac,
                                                   bluepy.btle.ADDR_TYPE_RANDOM)
         except bluepy.btle.BTLEException:
@@ -36,11 +38,13 @@ class Switchmate:
 
     def _sendpacket(self, key, retry=2) -> bool:
         try:
+            _LOGGER.debug("Sending key %s", key)
             self._device.writeCharacteristic(HANDLE, key, True)
         except bluepy.btle.BTLEException:
-            _LOGGER.error("Cannot connect to switchmate. Retrying")
             if retry < 1:
+                _LOGGER.error("Cannot connect to switchmate.")
                 return False
+            _LOGGER.error("Cannot connect to switchmate. Retrying")
             if not self._connect():
                 return False
             self._sendpacket(key, retry-1)
@@ -49,8 +53,10 @@ class Switchmate:
     def update(self) -> None:
         """Synchronize state with switch."""
         try:
+            _LOGGER.debug("Updating device state.")
             self.state = self._device.readCharacteristic(HANDLE) == ON_KEY
         except bluepy.btle.BTLEException:
+            _LOGGER.error("Failed to update device state.", exc_info=True)
             self._connect()
 
     def turn_on(self) -> bool:
