@@ -21,7 +21,7 @@ class Switchmate:
         self._connect()
 
     def _connect(self) -> bool:
-        if self._device:
+        if self._device is not None:
             _LOGGER.debug("Disconnecting")
             try:
                 self._device.disconnect()
@@ -47,7 +47,7 @@ class Switchmate:
             _LOGGER.error("Cannot connect to switchmate. Retrying")
             if not self._connect():
                 return False
-            self._sendpacket(key, retry-1)
+            return self._sendpacket(key, retry-1)
         return True
 
     def update(self) -> None:
