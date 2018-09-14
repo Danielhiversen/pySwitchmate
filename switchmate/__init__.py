@@ -5,8 +5,8 @@ import logging
 import bluepy
 
 HANDLE = 0x2e
-ON_KEY = b'\x00'
-OFF_KEY = b'\x01'
+ON_KEY = b'\x01'
+OFF_KEY = b'\x00'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,10 +14,11 @@ _LOGGER = logging.getLogger(__name__)
 class Switchmate:
     """Representation of a Switchmate."""
 
-    def __init__(self, mac) -> None:
+    def __init__(self, mac, flip_on_off=False) -> None:
         self._mac = mac
         self.state = False
         self._device = None
+        self._flip_on_off = flip_on_off
         self._connect()
 
     def _connect(self) -> bool:
@@ -61,8 +62,8 @@ class Switchmate:
 
     def turn_on(self) -> bool:
         """Turn the switch on."""
-        return self._sendpacket(ON_KEY)
+        return self._sendpacket(ON_KEY if not self._flip_on_off else OFF_KEY)
 
     def turn_off(self) -> bool:
         """Turn the switch off."""
-        return self._sendpacket(OFF_KEY)
+        return self._sendpacket(OFF_KEY if not self._flip_on_off else ON_KEY)
