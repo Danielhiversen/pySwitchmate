@@ -55,7 +55,8 @@ class Switchmate:
         """Synchronize state with switch."""
         try:
             _LOGGER.debug("Updating device state.")
-            self.state = self._device.readCharacteristic(HANDLE) == ON_KEY
+            key = ON_KEY if not self._flip_on_off else OFF_KEY
+            self.state = self._device.readCharacteristic(HANDLE) == key
         except bluepy.btle.BTLEException:
             _LOGGER.error("Failed to update device state.", exc_info=True)
             self._connect()
