@@ -69,7 +69,6 @@ class Switchmate:
             self._connect()
         self.available = True
 
-
     def turn_on(self) -> bool:
         """Turn the switch on."""
         return self._sendpacket(ON_KEY if not self._flip_on_off else OFF_KEY)
