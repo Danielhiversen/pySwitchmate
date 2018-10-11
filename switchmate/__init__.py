@@ -18,6 +18,7 @@ class Switchmate:
         self._mac = mac
         self.state = False
         self._device = None
+        self.available = False
         self._flip_on_off = flip_on_off
         self._connect()
 
@@ -34,7 +35,9 @@ class Switchmate:
                                                   bluepy.btle.ADDR_TYPE_RANDOM)
         except bluepy.btle.BTLEException:
             _LOGGER.error("Failed to connect to switchmate", exc_info=True)
+            self.available = False
             return False
+        self.available = True
         return True
 
     def _sendpacket(self, key, retry=2) -> bool:
@@ -44,11 +47,14 @@ class Switchmate:
         except bluepy.btle.BTLEException:
             if retry < 1:
                 _LOGGER.error("Cannot connect to switchmate.")
+                self.available = False
                 return False
             _LOGGER.error("Cannot connect to switchmate. Retrying")
             if not self._connect():
+                self.available = False
                 return False
             return self._sendpacket(key, retry-1)
+        self.available = True
         return True
 
     def update(self) -> None:
@@ -59,7 +65,10 @@ class Switchmate:
             self.state = self._device.readCharacteristic(HANDLE) == key
         except bluepy.btle.BTLEException:
             _LOGGER.error("Failed to update device state.", exc_info=True)
+            self.available = False
             self._connect()
+        self.available = True
+
 
     def turn_on(self) -> bool:
         """Turn the switch on."""
