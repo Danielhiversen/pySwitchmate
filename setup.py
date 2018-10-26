@@ -4,7 +4,7 @@ setup(
     name = 'PySwitchmate',
     packages = ['switchmate'],
     install_requires=['bluepy'],
-    version = '0.4.2',
+    version = '0.4.3',
     description = 'A library to communicate with Switchmate',
     author='Daniel Hoyer Iversen',
     url='https://github.com/Danielhiversen/pySwitchmate/',
