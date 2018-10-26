@@ -62,7 +62,7 @@ class Switchmate:
         except bluepy.btle.BTLEException:
             if retry < 1 or not self._connect():
                 self.available = False
-               _LOGGER.error("Failed to update device state.", exc_info=True)
+                _LOGGER.error("Failed to update device state.", exc_info=True)
                 return
             return self.update(retry-1)
         self.available = True
