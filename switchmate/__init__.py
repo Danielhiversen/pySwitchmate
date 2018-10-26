@@ -45,29 +45,28 @@ class Switchmate:
             _LOGGER.debug("Sending key %s", key)
             self._device.writeCharacteristic(HANDLE, key, True)
         except bluepy.btle.BTLEException:
-            if retry < 1:
-                _LOGGER.error("Cannot connect to switchmate.")
-                self.available = False
-                return False
-            _LOGGER.error("Cannot connect to switchmate. Retrying")
-            if not self._connect():
+            if retry < 1 or not self._connect():
+                _LOGGER.error("Cannot connect to switchmate.", exc_info=True)
                 self.available = False
                 return False
             return self._sendpacket(key, retry-1)
         self.available = True
         return True
 
-    def update(self) -> None:
+    def update(self, retry=2) -> None:
         """Synchronize state with switch."""
         try:
             _LOGGER.debug("Updating device state.")
             key = ON_KEY if not self._flip_on_off else OFF_KEY
             self.state = self._device.readCharacteristic(HANDLE) == key
         except bluepy.btle.BTLEException:
-            _LOGGER.error("Failed to update device state.", exc_info=True)
-            self.available = False
-            self._connect()
+            if retry < 1 or not self._connect():
+                self.available = False
+                _LOGGER.error("Failed to update device state.", exc_info=True)
+                return None
+            return self.update(retry-1)
         self.available = True
+        return None
 
     def turn_on(self) -> bool:
         """Turn the switch on."""
