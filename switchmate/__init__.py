@@ -63,9 +63,10 @@ class Switchmate:
             if retry < 1 or not self._connect():
                 self.available = False
                 _LOGGER.error("Failed to update device state.", exc_info=True)
-                return
+                return None
             return self.update(retry-1)
         self.available = True
+        return None
 
     def turn_on(self) -> bool:
         """Turn the switch on."""
