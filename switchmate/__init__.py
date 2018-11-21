@@ -59,7 +59,7 @@ class Switchmate:
             _LOGGER.debug("Updating device state.")
             key = ON_KEY if not self._flip_on_off else OFF_KEY
             self.state = self._device.readCharacteristic(HANDLE) == key
-        except bluepy.btle.BTLEException:
+        except bluepy.btle.BTLEException, AttributeError:
             if retry < 1 or not self._connect():
                 self.available = False
                 _LOGGER.error("Failed to update device state.", exc_info=True)
