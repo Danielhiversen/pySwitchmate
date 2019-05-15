@@ -20,7 +20,6 @@ class Switchmate:
         self._device = None
         self.available = False
         self._flip_on_off = flip_on_off
-        self._connect()
 
     def _connect(self) -> bool:
         if self._device is not None:
