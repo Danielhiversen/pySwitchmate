@@ -33,7 +33,8 @@ class Switchmate:
             self._device = bluepy.btle.Peripheral(self._mac,
                                                   bluepy.btle.ADDR_TYPE_RANDOM)
         except (bluepy.btle.BTLEException, BrokenPipeError):
-            _LOGGER.error("Failed to connect to switchmate", exc_info=True)
+            _LOGGER.error("Failed to connect to switchmate",
+                          exc_info=logging.DEBUG >= _LOGGER.root.level)
             self.available = False
             return False
         self.available = True
@@ -45,7 +46,8 @@ class Switchmate:
             self._device.writeCharacteristic(HANDLE, key, True)
         except (bluepy.btle.BTLEException, BrokenPipeError):
             if retry < 1 or not self._connect():
-                _LOGGER.error("Cannot connect to switchmate.", exc_info=True)
+                _LOGGER.error("Cannot connect to switchmate.",
+                              exc_info=logging.DEBUG >= _LOGGER.root.level)
                 self.available = False
                 return False
             return self._sendpacket(key, retry-1)
