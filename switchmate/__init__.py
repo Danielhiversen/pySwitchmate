@@ -4,7 +4,7 @@ import logging
 
 import bluepy
 
-HANDLE = 0x2e
+HANDLE = 0x30
 ON_KEY = b'\x01'
 OFF_KEY = b'\x00'
 
