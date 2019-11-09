@@ -44,7 +44,7 @@ class Switchmate:
         try:
             _LOGGER.debug("Sending key %s", key)
             self._device.writeCharacteristic(HANDLE, key, True)
-        except (bluepy.btle.BTLEException, BrokenPipeError):
+        except (bluepy.btle.BTLEException, BrokenPipeError, AttributeError):
             if retry < 1 or not self._connect():
                 _LOGGER.error("Cannot connect to switchmate.",
                               exc_info=logging.DEBUG >= _LOGGER.root.level)
