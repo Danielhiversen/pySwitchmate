@@ -6,7 +6,7 @@ setup(
     install_requires=['bluepy'],
     version = '0.4.6',
     description = 'A library to communicate with Switchmate',
-    author='Daniel Hoyer Iversen',
+    author='Daniel Hoyer',
     url='https://github.com/Danielhiversen/pySwitchmate/',
     classifiers=[
         'Development Status :: 3 - Alpha',
