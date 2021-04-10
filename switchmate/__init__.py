@@ -6,12 +6,10 @@ import sys
 
 from enum import Enum
 
-from bluepy.btle import (
-    Scanner, Peripheral, AssignedNumbers,
-    ADDR_TYPE_RANDOM, UUID, BTLEException
-)
+from bluepy.btle import (Scanner, AssignedNumbers, BTLEException)
 
-# Values known to work on current FW https://github.com/brianpeiris/switchmate/issues/6#issuecomment-366395303
+# Values known to work on current FW
+# https://github.com/brianpeiris/switchmate/issues/6#issuecomment-366395303
 # Bright/Slim (Slim Device with Motion Sensor): FW v2.9.15+
 # Light/Original/Switchmate (No Motion Sensor): FW v2.99.18+
 
@@ -19,10 +17,10 @@ BRIGHT_STATE_HANDLE = 0x30
 ORIGINAL_MODEL_STRING_HANDLE = 0x14
 ORIGINAL_STATE_HANDLE = 0x2e
 SERVICES_AD_TYPE = 0x07
-SWITCHMATE_SERVICE = 'a22bd383-ebdd-49ac-b2e7-40eb55f5d0ab'
+SWITCHMATE_SERVICE = "a22bd383-ebdd-49ac-b2e7-40eb55f5d0ab"
 
-ON_KEY = b'\x01'
-OFF_KEY = b'\x00'
+ON_KEY = b"\x01"
+OFF_KEY = b"\x00"
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.addHandler(
@@ -42,7 +40,9 @@ def _get_switchmates(scan_entries):
         is_switchmate = service_uuid == SWITCHMATE_SERVICE
         if not is_switchmate:
             continue
-        if not list(filter(lambda sw: (sw.mac == scan_entry.addr), switchmates)):
+        if not list(
+            filter(lambda sw: (sw.mac == scan_entry.addr), switchmates)
+        ):
             switchmates.append(Switchmate(mac=scan_entry.addr))
     switchmates.sort(key=lambda sw: sw.mac)
     return switchmates
@@ -53,25 +53,21 @@ def scan(timeout=None):
 
     try:
         switchmates = _get_switchmates(scanner.scan(timeout))
-    except BTLEException as ex:
+    except (BTLEException):
         _LOGGER.error(
-            'Could not complete scan.',
-            'Try running switchmate with sudo.',
-            ex.message
-        )
+            "Could not complete scan. Try running switchmate with sudo.",
+            exc_info=logging.DEBUG >= _LOGGER.root.level)
         return
-    except OSError as ex:
+    except (OSError):
         _LOGGER.error(
-            'Could not complete scan.',
-            'Try compiling the bluepy helper.',
-            ex
-        )
+            "Could not complete scan. Try compiling the bluepy helper.",
+            exc_info=logging.DEBUG >= _LOGGER.root.level)
         return
 
     if len(switchmates):
         _LOGGER.debug("Found %s devices", len(switchmates))
     else:
-        _LOGGER.debug('No Switchmate devices found')
+        _LOGGER.debug("No Switchmate devices found")
 
     sys.stdout.flush()
     return switchmates
@@ -119,9 +115,7 @@ class Switchmate:
     def _sendpacket(self, key, retry=10) -> bool:
         try:
             _LOGGER.debug("Sending key %s", key)
-
             self._device.writeCharacteristic(self._getHandle(), key, True)
-
         except (bluepy.btle.BTLEException, BrokenPipeError, AttributeError):
             if retry < 1 or not self._connect():
                 _LOGGER.error("Cannot connect to switchmate.",
@@ -164,6 +158,7 @@ class Switchmate:
         self.available = True
 
         _LOGGER.debug("Processing device %s", self.mac)
+        _LOGGER.debug("Model %s", self.model)
         _LOGGER.debug("State %s", self.state)
         _LOGGER.debug("Battery %s", ord(self.battery))
 
