@@ -7,8 +7,6 @@ import bleak
 
 CONNECT_LOCK = asyncio.Lock()
 
-HANDLE = 45  # or 47 for newer "Bright" models
-
 ON_KEY = b'\x01'
 OFF_KEY = b'\x00'
 
@@ -24,9 +22,10 @@ class Switchmate:
         self._device = None
         self.available = False
         self._flip_on_off = flip_on_off
+        self._handle = None
 
     async def _connect(self) -> bool:
-        # Disconnect before connecting
+        # Disconnect before reconnecting
         if self._device is not None:
             await self._disconnect()
         _LOGGER.debug("Connecting")
@@ -34,6 +33,10 @@ class Switchmate:
         try:
             async with CONNECT_LOCK:
                 await self._device.connect()
+                if self._handle is None:
+                    # Determine state/control handle based on Switchmate model
+                    self._handle = (45 if await self._device.read_gatt_char(19)
+                                    == b'Original' else 47)
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             _LOGGER.error("Failed to connect to switchmate",
                           exc_info=logging.DEBUG >= _LOGGER.root.level)
@@ -53,7 +56,7 @@ class Switchmate:
         _LOGGER.debug("Sending key %s", key)
         try:
             async with CONNECT_LOCK:
-                await self._device.write_gatt_char(HANDLE, key, True)
+                await self._device.write_gatt_char(self._handle, key, True)
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             if retry < 1 or not await self._connect():
                 _LOGGER.error("Cannot connect to switchmate.",
@@ -70,7 +73,8 @@ class Switchmate:
         key = ON_KEY if not self._flip_on_off else OFF_KEY
         try:
             async with CONNECT_LOCK:
-                self.state = await self._device.read_gatt_char(HANDLE) == key
+                self.state = (
+                    await self._device.read_gatt_char(self._handle) == key)
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             if retry < 1 or not await self._connect():
                 self.available = False
