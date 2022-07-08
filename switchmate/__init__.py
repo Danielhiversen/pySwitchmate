@@ -28,7 +28,7 @@ class Switchmate:
     async def _connect(self) -> bool:
         # Disconnect before connecting
         if self._device is not None:
-            self._disconnect
+            await self._disconnect()
         _LOGGER.debug("Connecting")
         self._device = bleak.BleakClient(self._mac)
         try:
@@ -45,7 +45,7 @@ class Switchmate:
     async def _disconnect(self) -> None:
         _LOGGER.debug("Disconnecting")
         try:
-            self._device.disconnect()
+            await self._device.disconnect()
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             pass
 
