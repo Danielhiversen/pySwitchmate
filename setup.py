@@ -3,8 +3,8 @@ from setuptools import setup
 setup(
     name = 'PySwitchmate',
     packages = ['switchmate'],
-    install_requires=['bluepy'],
-    version = '0.4.6',
+    install_requires=['bleak'],
+    version = '0.5.0',
     description = 'A library to communicate with Switchmate',
     author='Daniel Hjelseth Hoyer',
     url='https://github.com/Danielhiversen/pySwitchmate/',
