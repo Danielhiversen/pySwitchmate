@@ -36,7 +36,9 @@ class Switchmate:
                 if self._handle is None:
                     # Determine handle based on Switchmate model
                     self._handle = (
-                        47 if await self._device.read_gatt_char(21) == b"Bright" else 45
+                        47
+                        if await self._device.read_gatt_char(21) == b"Bright"
+                        else 45
                     )
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             _LOGGER.error(
@@ -72,7 +74,8 @@ class Switchmate:
                 else:
                     _LOGGER.debug("Updating Switchmate state")
                     self.state = (
-                        await self._device.read_gatt_char(self._handle) == ON_KEY
+                        await self._device.read_gatt_char(self._handle)
+                        == ON_KEY
                         if not self._flip_on_off
                         else OFF_KEY
                     )
@@ -94,8 +97,12 @@ class Switchmate:
 
     async def turn_on(self) -> bool:
         """Turn the switch on."""
-        return await self._communicate(ON_KEY if not self._flip_on_off else OFF_KEY)
+        return await self._communicate(
+            ON_KEY if not self._flip_on_off else OFF_KEY
+        )
 
     async def turn_off(self) -> bool:
         """Turn the switch off."""
-        return await self._communicate(OFF_KEY if not self._flip_on_off else ON_KEY)
+        return await self._communicate(
+            OFF_KEY if not self._flip_on_off else ON_KEY
+        )
