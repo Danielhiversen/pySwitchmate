@@ -25,28 +25,29 @@ class Switchmate:
         self._handle = None
 
     async def _connect(self) -> bool:
-        async with CONNECT_LOCK:
-            # Disconnect before reconnecting
-            if self._device is not None:
-                await self._disconnect()
-            _LOGGER.debug("Connecting")
-            self._device = bleak.BleakClient(self._mac)
-            try:
+        # Disconnect before reconnecting
+        if self._device is not None:
+            await self._disconnect()
+        _LOGGER.debug("Connecting")
+        self._device = bleak.BleakClient(self._mac)
+        try:
+            async with CONNECT_LOCK:
                 await self._device.connect()
                 if self._handle is None:
                     # Determine handle based on Switchmate model
                     self._handle = (47 if await self._device.read_gatt_char(21)
                                     == b'Bright' else 45)
-            except (bleak.BleakError, asyncio.exceptions.TimeoutError):
-                _LOGGER.error("Failed to connect to Switchmate",
-                              exc_info=logging.DEBUG >= _LOGGER.root.level)
-                return False
-            return True
+        except (bleak.BleakError, asyncio.exceptions.TimeoutError):
+            _LOGGER.error("Failed to connect to Switchmate",
+                          exc_info=logging.DEBUG >= _LOGGER.root.level)
+            return False
+        return True
 
     async def _disconnect(self) -> bool:
         _LOGGER.debug("Disconnecting")
         try:
-            await self._device.disconnect()
+            async with CONNECT_LOCK:
+                await self._device.disconnect()
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             _LOGGER.error("Failed to disconnect from Switchmate",
                           exc_info=logging.DEBUG >= _LOGGER.root.level)
