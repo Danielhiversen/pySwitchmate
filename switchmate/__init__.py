@@ -43,13 +43,15 @@ class Switchmate:
                 return False
             return True
 
-    async def _disconnect(self) -> None:
+    async def _disconnect(self) -> bool:
         _LOGGER.debug("Disconnecting")
         try:
             await self._device.disconnect()
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             _LOGGER.error("Failed to disconnect from Switchmate",
                           exc_info=logging.DEBUG >= _LOGGER.root.level)
+            return False
+        return True
 
     async def _communicate(self, key=None, retry=True) -> bool:
         try:
@@ -66,8 +68,6 @@ class Switchmate:
                     self.state = (
                         await self._device.read_gatt_char(self._handle) ==
                         ON_KEY if not self._flip_on_off else OFF_KEY)
-            self.available = True
-            return True
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             if retry:
                 return await self._communicate(key, False)
@@ -75,10 +75,12 @@ class Switchmate:
                           exc_info=logging.DEBUG >= _LOGGER.root.level)
             self.available = False
             return False
+        self.available = True
+        return True
 
-    async def update(self) -> None:
+    async def update(self) -> bool:
         """Synchronize state with switch."""
-        await self._communicate()
+        return await self._communicate()
 
     async def turn_on(self) -> bool:
         """Turn the switch on."""
