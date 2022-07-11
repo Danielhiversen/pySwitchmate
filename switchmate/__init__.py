@@ -25,71 +25,67 @@ class Switchmate:
         self._handle = None
 
     async def _connect(self) -> bool:
-        # Disconnect before reconnecting
-        if self._device is not None:
-            await self._disconnect()
-        _LOGGER.debug("Connecting")
-        self._device = bleak.BleakClient(self._mac)
-        try:
-            async with CONNECT_LOCK:
+        async with CONNECT_LOCK:
+            # Disconnect before reconnecting
+            if self._device is not None:
+                await self._disconnect()
+            _LOGGER.debug("Connecting")
+            self._device = bleak.BleakClient(self._mac)
+            try:
                 await self._device.connect()
                 if self._handle is None:
-                    # Determine state/control handle based on Switchmate model
-                    self._handle = (45 if await self._device.read_gatt_char(19)
-                                    == b'Original' else 47)
-        except (bleak.BleakError, asyncio.exceptions.TimeoutError):
-            _LOGGER.error("Failed to connect to switchmate",
-                          exc_info=logging.DEBUG >= _LOGGER.root.level)
-            self.available = False
-            return False
-        self.available = True
-        return True
+                    # Determine handle based on Switchmate model
+                    self._handle = (47 if await self._device.read_gatt_char(21)
+                                    == b'Bright' else 45)
+            except (bleak.BleakError, asyncio.exceptions.TimeoutError):
+                _LOGGER.error("Failed to connect to Switchmate",
+                              exc_info=logging.DEBUG >= _LOGGER.root.level)
+                return False
+            return True
 
     async def _disconnect(self) -> None:
         _LOGGER.debug("Disconnecting")
         try:
             await self._device.disconnect()
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
-            pass
+            _LOGGER.error("Failed to disconnect from Switchmate",
+                          exc_info=logging.DEBUG >= _LOGGER.root.level)
 
-    async def _sendpacket(self, key, retry=2) -> bool:
-        _LOGGER.debug("Sending key %s", key)
+    async def _communicate(self, key=None, retry=True) -> bool:
         try:
+            if ((self._device is None or not self._device.is_connected) and
+                    not await self._connect()):
+                raise bleak.BleakError("No connection to Switchmate")
             async with CONNECT_LOCK:
-                await self._device.write_gatt_char(self._handle, key, True)
+                if key:
+                    _LOGGER.debug("Sending key %s", key)
+                    await self._device.write_gatt_char(
+                        self._handle, key, True)
+                else:
+                    _LOGGER.debug("Updating Switchmate state")
+                    self.state = (
+                        await self._device.read_gatt_char(self._handle) ==
+                        ON_KEY if not self._flip_on_off else OFF_KEY)
+            self.available = True
+            return True
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
-            if retry < 1 or not await self._connect():
-                _LOGGER.error("Cannot connect to switchmate.",
-                              exc_info=logging.DEBUG >= _LOGGER.root.level)
-                self.available = False
-                return False
-            return await self._sendpacket(key, retry-1)
-        self.available = True
-        return True
+            if retry:
+                return await self._communicate(key, False)
+            _LOGGER.error("Cannot communicate with Switchmate",
+                          exc_info=logging.DEBUG >= _LOGGER.root.level)
+            self.available = False
+            return False
 
-    async def update(self, retry=2) -> None:
+    async def update(self) -> None:
         """Synchronize state with switch."""
-        _LOGGER.debug("Updating device state.")
-        key = ON_KEY if not self._flip_on_off else OFF_KEY
-        try:
-            async with CONNECT_LOCK:
-                self.state = (
-                    await self._device.read_gatt_char(self._handle) == key)
-        except (bleak.BleakError, asyncio.exceptions.TimeoutError):
-            if retry < 1 or not await self._connect():
-                self.available = False
-                _LOGGER.error("Failed to update device state.", exc_info=True)
-                return None
-            return await self.update(retry-1)
-        self.available = True
-        return None
+        await self._communicate()
 
     async def turn_on(self) -> bool:
         """Turn the switch on."""
-        return await self._sendpacket(ON_KEY if not self._flip_on_off else
-                                      OFF_KEY)
+        return await self._communicate(ON_KEY if not self._flip_on_off else
+                                       OFF_KEY)
 
     async def turn_off(self) -> bool:
         """Turn the switch off."""
-        return await self._sendpacket(OFF_KEY if not self._flip_on_off else
-                                      ON_KEY)
+        return await self._communicate(OFF_KEY if not self._flip_on_off else
+                                       ON_KEY)
