@@ -73,12 +73,9 @@ class Switchmate:
                     await self._device.write_gatt_char(self._handle, key, True)
                 else:
                     _LOGGER.debug("Updating Switchmate state")
-                    self.state = (
-                        await self._device.read_gatt_char(self._handle)
-                        == ON_KEY
-                        if not self._flip_on_off
-                        else OFF_KEY
-                    )
+                    self.state = await self._device.read_gatt_char(
+                        self._handle
+                    ) == (ON_KEY if not self._flip_on_off else OFF_KEY)
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             if retry:
                 return await self._communicate(key, False)
