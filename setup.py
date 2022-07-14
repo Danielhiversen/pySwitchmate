@@ -4,7 +4,7 @@ setup(
     name="PySwitchmate",
     packages=["switchmate"],
     install_requires=["bleak"],
-    version="0.5.0",
+    version="0.5.1",
     description="A library to communicate with Switchmate",
     author="Daniel Hjelseth Hoyer",
     url="https://github.com/Danielhiversen/pySwitchmate/",
