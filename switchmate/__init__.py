@@ -16,71 +16,35 @@ _LOGGER = logging.getLogger(__name__)
 class Switchmate:
     """Representation of a Switchmate."""
 
-    def __init__(self, mac, flip_on_off=False) -> None:
-        self._mac = mac
-        self.state = False
-        self._device = None
+    def __init__(self, device, flip_on_off=False) -> None:
         self.available = False
+        self.state = False
+        self._client = None
+        self._device = device
         self._flip_on_off = flip_on_off
-        self._handle = None
+        self._is_bright = None
 
-    async def _connect(self) -> bool:
-        # Disconnect before reconnecting
-        if self._device is not None:
-            await self._disconnect()
-        _LOGGER.debug("Connecting")
-        self._device = bleak.BleakClient(self._mac)
+    async def _connect(self, retry=True) -> bool:
+        """Connect to Switchmate"""
+        _LOGGER.debug("Connecting to Switchmate")
         try:
             async with CONNECT_LOCK:
-                await self._device.connect()
-                if self._handle is None:
-                    # Determine handle based on Switchmate model
-                    self._handle = (
-                        47
-                        if await self._device.read_gatt_char(21) == b"Bright"
-                        else 45
+                self._client = bleak.BleakClient(self._device)
+                await self._client.connect()
+                # "Bright" models use different handles than original models
+                if self._is_bright is None:
+                    self._is_bright = (
+                        await self._client.read_gatt_char(21) == b"Bright"
                     )
-        except (bleak.BleakError, asyncio.exceptions.TimeoutError):
-            _LOGGER.error(
-                "Failed to connect to Switchmate",
-                exc_info=logging.DEBUG >= _LOGGER.root.level,
-            )
-            return False
-        return True
-
-    async def _disconnect(self) -> bool:
-        _LOGGER.debug("Disconnecting")
-        try:
-            async with CONNECT_LOCK:
-                await self._device.disconnect()
-        except (bleak.BleakError, asyncio.exceptions.TimeoutError):
-            _LOGGER.error(
-                "Failed to disconnect from Switchmate",
-                exc_info=logging.DEBUG >= _LOGGER.root.level,
-            )
-            return False
-        return True
-
-    async def _communicate(self, key=None, retry=True) -> bool:
-        try:
-            if (
-                self._device is None or not self._device.is_connected
-            ) and not await self._connect():
-                raise bleak.BleakError("No connection to Switchmate")
-            async with CONNECT_LOCK:
-                if key:
-                    _LOGGER.debug("Sending key %s", key)
-                    await self._device.write_gatt_char(self._handle, key, True)
-                else:
-                    _LOGGER.debug("Updating Switchmate state")
-                    self.state = await self._device.read_gatt_char(
-                        self._handle
-                    ) == (ON_KEY if not self._flip_on_off else OFF_KEY)
+                # Subscribing to Switchmate state notifications
+                await self._client.start_notify(
+                    42 if self._is_bright else 40, self._notification_handler
+                )
         except (bleak.BleakError, asyncio.exceptions.TimeoutError):
             if retry:
-                return await self._communicate(key, False)
+                return await self._connect(False)
             _LOGGER.error(
-                "Cannot communicate with Switchmate",
+                "Failed to connect to Switchmate",
                 exc_info=logging.DEBUG >= _LOGGER.root.level,
             )
             self.available = False
@@ -88,18 +52,42 @@ class Switchmate:
         self.available = True
         return True
 
-    async def update(self) -> bool:
-        """Synchronize state with switch."""
-        return await self._communicate()
+    def _notification_handler(self, _handle, data) -> None:
+        _LOGGER.debug(f"Received response at {_handle} with {data}")
+        self.state = data[0] != self._flip_on_off
+
+    async def _send_command(self, key, retry=True) -> bool:
+        if (
+            self._client is None or not self._client.is_connected
+        ) and not await self._connect():
+            # No connection to Switchmate
+            return False
+        _LOGGER.debug("Sending key %s", key)
+        try:
+            async with CONNECT_LOCK:
+                await self._client.write_gatt_char(
+                    47 if self._is_bright else 45, key
+                )
+        except (bleak.BleakError, asyncio.exceptions.TimeoutError):
+            if retry:
+                return await self._send_command(key, False)
+            _LOGGER.error(
+                "Failed to send key to Switchmate",
+                exc_info=logging.DEBUG >= _LOGGER.root.level,
+            )
+            self.available = False
+            return False
+        self.available = True
+        return True
 
     async def turn_on(self) -> bool:
         """Turn the switch on."""
-        return await self._communicate(
+        return await self._send_command(
             ON_KEY if not self._flip_on_off else OFF_KEY
         )
 
     async def turn_off(self) -> bool:
         """Turn the switch off."""
-        return await self._communicate(
+        return await self._send_command(
             OFF_KEY if not self._flip_on_off else ON_KEY
         )
